@@ -32,6 +32,7 @@ def compare_versions(
     repo_path: str = typer.Option("./shopware_repo", help="Path to clone/store the repository"),
     output_file: Path = typer.Option("./output/changelog.md", help="Output file path for changelog"),
     stdout: bool = typer.Option(False, "--stdout", help="Print changelog to stdout instead of file"),
+    format: str = typer.Option("markdown", help="Output format (markdown, json)"),
 ):
     """Compare changelog entries between two Shopware versions."""
     manager = ChangelogManager(repo_path)
@@ -49,7 +50,7 @@ def compare_versions(
     entries, parsed_files = manager.get_entries_between_versions(from_version, to_version)
 
 
-    print_version_comparison(from_version, to_version, entries, parsed_files, output_file, stdout)
+    print_version_comparison(from_version, to_version, entries, parsed_files, output_file, stdout, format)
 
 @app.command()
 def parse_file(

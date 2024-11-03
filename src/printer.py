@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import List
+import json
 
 import typer
 from .models import ChangelogEntry
@@ -16,7 +17,7 @@ def print_versions(versions: list):
 
 from .markdown_generator import generate_version_comparison
 
-def print_version_comparison(from_version: str, to_version: str, to_entries: List[ChangelogEntry], parsed_files: list, output_file: Path = None, stdout: bool = False):
+def print_version_comparison(from_version: str, to_version: str, to_entries: List[ChangelogEntry], parsed_files: list, output_file: Path = None, stdout: bool = False, format: str = "markdown"):
     """Print comparison between two versions."""
     # Always show parsed files to stdout
     typer.echo("\nParsed changelog files:")
@@ -24,7 +25,16 @@ def print_version_comparison(from_version: str, to_version: str, to_entries: Lis
         typer.secho(f"  {file}", fg="bright_blue")
 
     # Generate the changelog content
-    final_content = generate_version_comparison(from_version, to_version, to_entries)
+    if format == "json":
+        comparison = {
+            "from_version": from_version,
+            "to_version": to_version,
+            "entries": [entry.model_dump() for entry in to_entries],
+            "parsed_files": parsed_files
+        }
+        final_content = json.dumps(comparison, indent=2, default=str)
+    else:
+        final_content = generate_version_comparison(from_version, to_version, to_entries)
 
     # Output based on mode
     if stdout:
