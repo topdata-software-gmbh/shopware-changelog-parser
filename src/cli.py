@@ -54,6 +54,7 @@ def compare_versions(
 @app.command()
 def parse_file(
     repo_path: str = typer.Option("./shopware_repo", help="Path to clone/store the repository"),
+    format: str = typer.Option("original", help="Output format (original, markdown, yaml)"),
 ):
     """Parse a single changelog file selected interactively."""
     manager = ChangelogManager(repo_path)
@@ -80,7 +81,7 @@ def parse_file(
     ).execute()
 
     parsed_content = manager.parse_changelog_file(selected_file)
-    print_changelog_file(parsed_content)
+    print_changelog_file(parsed_content, format)
     # except Exception as e:
     #     typer.echo(f"Error parsing changelog file: {e}")
     #     raise typer.Exit(1)

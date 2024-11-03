@@ -33,19 +33,13 @@ def print_version_comparison(from_version: str, to_version: str, to_entries: Lis
         output_file.write_text(final_content)
         typer.echo(f"\nChangelog written to: {output_file}")
 
-def print_changelog_file(entry: ChangelogEntry):
-    """Print parsed changelog file content."""
-    typer.echo("\nParsed content:")
-    typer.echo("=" * 40)
-    typer.echo(f"Date: {entry.date}")
-    typer.echo(f"Title: {entry.title}")
-    typer.echo(f"Version: {entry.version}")
-    if entry.issue:
-        typer.echo(f"Issue: {entry.issue}")
-    if entry.author:
-        typer.echo(f"Author: {entry.author}")
-    if entry.author_email:
-        typer.echo(f"Author Email: {entry.author_email}")
-    if entry.author_github:
-        typer.echo(f"Author Github: {entry.author_github}")
-    typer.echo(f"Content:\n{entry.content}")
+from .formatters import FORMATTERS
+
+def print_changelog_file(entry: ChangelogEntry, format: str = "original"):
+    """Print a single changelog entry in the specified format."""
+    if format not in FORMATTERS:
+        typer.echo(f"Unknown format: {format}. Using 'original'.")
+        format = "original"
+    
+    formatter = FORMATTERS[format]
+    typer.echo(formatter(entry))

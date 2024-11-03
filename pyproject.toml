@@ -9,6 +9,7 @@ dependencies = [
     "gitpython",
     "InquirerPy",
     "pydantic>=2.0.0",
+    "pyyaml",
 ]
 
 
