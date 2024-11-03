@@ -54,7 +54,7 @@ def compare_versions(
 @app.command()
 def parse_file(
     repo_path: str = typer.Option("./shopware_repo", help="Path to clone/store the repository"),
-    format: str = typer.Option("original", help="Output format (original, markdown, yaml)"),
+    format: str = typer.Option("original", help="Output format (original, markdown, yaml, json)"),
 ):
     """Parse a single changelog file selected interactively."""
     manager = ChangelogManager(repo_path)

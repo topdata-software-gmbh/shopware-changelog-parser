@@ -1,6 +1,7 @@
 from typing import Dict, Any
 from .models import ChangelogEntry
 import yaml
+import json
 
 def format_original(entry: ChangelogEntry) -> str:
     """Format entry as original markdown with frontmatter"""
@@ -35,9 +36,15 @@ def format_yaml(entry: ChangelogEntry) -> str:
      """Format entry as YAML"""
      data = entry.model_dump()
      return yaml.dump(data, default_flow_style=False)
+
+def format_json(entry: ChangelogEntry) -> str:
+     """Format entry as JSON"""
+     data = entry.model_dump()
+     return json.dumps(data, indent=2, default=str)
      
 FORMATTERS = {
     'original': format_original,
     'markdown': format_markdown,
-    'yaml': format_yaml
+    'yaml': format_yaml,
+    'json': format_json
 }
