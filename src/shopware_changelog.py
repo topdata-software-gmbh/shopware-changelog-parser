@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import List, Optional
 import re
 
-app = typer.Typer()
+app = typer.Typer(help="Shopware Changelog Parser", add_help_option=True, context_settings={"help_option_names": ["-h", "--help"]})
 
 def get_available_versions(repo_path: str) -> List[str]:
     """Get all available changelog versions from the repository."""
@@ -52,8 +52,11 @@ def clone_or_pull_repo(repo_url: str, target_dir: str) -> git.Repo:
 
 def get_changelog_entries(repo_path: str, version: str) -> List[dict]:
     """Get changelog entries for a specific version."""
+    # Replace dots with dashes in version number
+    version = version.replace('.', '-')
     changelog_dir = Path(repo_path) / "changelog" / f"release-{version}"
-
+    
+    typer.echo(f"Looking for changelog entries in: {changelog_dir}")
     if not changelog_dir.exists():
         typer.echo(f"No changelog directory found for version {version}")
         raise typer.Exit(1)
