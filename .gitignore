@@ -1,0 +1,8 @@
+.idea
+__pycache__
+
+.aider*
+.env
+.venv
+shopware_repo
+

@@ -1,0 +1,23 @@
+[project]
+name = "shopware-release-parser"
+version = "0.1.0"
+description = "Parser for Shopware GitHub releases to extract changelog information"
+requires-python = ">=3.8"
+dependencies = [
+    "rich",
+    "typer",
+    "gitpython",
+]
+
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+sw-changelog = "src.shopware_changelog:app"
+
+# ere is no directory that matches the name of your project (shopware_release_parser).
+# You need to specify the files to include in the tool.hatch.build.targets.wheel table.
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
