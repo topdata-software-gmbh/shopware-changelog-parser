@@ -7,6 +7,7 @@ class ChangelogEntry(BaseModel):
     date: date
     title: str
     version: str
+    file: str
     content: str = Field(default="")
     issue: Optional[str] = None
     author: Optional[str] = None

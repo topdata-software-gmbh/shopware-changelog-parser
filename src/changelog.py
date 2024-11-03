@@ -67,6 +67,7 @@ class ChangelogManager:
             date=metadata.get('date', date_part),
             title=metadata.get('title', metadata.get('issue', '')),
             version=version,
+            file=file_path,
             content=content,
             issue=metadata.get('issue'),
             author=metadata.get('author'),
