@@ -1,9 +1,12 @@
 import typer
 import git
+import json
+import os
 from pathlib import Path
 from InquirerPy import inquirer
 from .changelog import ChangelogManager
 from .printer import print_versions, print_version_comparison, print_changelog_file
+from .release_notifier import ReleaseNotifier
 
 app = typer.Typer(help="Shopware Changelog Parser", add_help_option=True, context_settings={"help_option_names": ["-h", "--help"]})
 
@@ -86,6 +89,22 @@ def parse_file(
     # except Exception as e:
     #     typer.echo(f"Error parsing changelog file: {e}")
     #     raise typer.Exit(1)
+
+@app.command()
+def notify(
+    repo_path: str = typer.Option("./shopware_repo", help="Path to clone/store the repository"),
+):
+    """Test Slack notification for latest version"""
+    slack_token = os.getenv('SLACK_TOKEN')
+    slack_channel = os.getenv('SLACK_CHANNEL')
+    
+    if not slack_token or not slack_channel:
+        typer.echo("Error: SLACK_TOKEN and SLACK_CHANNEL environment variables must be set")
+        raise typer.Exit(1)
+    
+    notifier = ReleaseNotifier(slack_token, slack_channel)
+    notifier.check_and_notify()
+    typer.echo("Notification check complete")
 
 if __name__ == "__main__":
     app()
