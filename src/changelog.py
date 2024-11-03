@@ -1,7 +1,8 @@
 import git
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
+from .models import ChangelogEntry
 import re
 from . import frontmatter
 
@@ -117,23 +118,35 @@ class ChangelogManager:
                 markdown_files.extend(files)
         return markdown_files
 
-    def parse_markdown_files(self, files: List[str]) -> List[dict]:
-        """Parse markdown files and return structured data."""
+    def parse_markdown_files(self, files: List[str]) -> List[ChangelogEntry]:
+        """Parse markdown files and return structured data as ChangelogEntry objects."""
         parsed_entries = []
         for file_path in files:
             try:
-                entry = self.parse_changelog_file(file_path)
-                parsed_entries.append(entry)
+                entry_dict = self.parse_changelog_file(file_path)
+                # Extract version from file path (release-6-4-20-0/file.md -> 6.4.20.0)
+                version = entry_dict['file'].split('/')[1].replace('release-', '').replace('-', '.')
+                
+                changelog_entry = ChangelogEntry(
+                    date=entry_dict['date'],
+                    title=entry_dict['title'],
+                    version=version,
+                    content=entry_dict['content'],
+                    issue=entry_dict['issue'],
+                    author=entry_dict['author'],
+                    author_email=entry_dict['author_email'],
+                    author_github=entry_dict['author_github']
+                )
+                parsed_entries.append(changelog_entry)
             except FileNotFoundError:
                 continue
         
-        return sorted(parsed_entries, key=lambda x: x['date'] if x['date'] else '')
+        return sorted(parsed_entries, key=lambda x: x.date if x.date else '')
 
-    def get_entries_between_versions(self, from_version: str, to_version: str) -> tuple[List[dict], List[str]]:
+    def get_entries_between_versions(self, from_version: str, to_version: str) -> Tuple[List[ChangelogEntry], List[str]]:
         """Get all changelog entries between two versions, inclusive.
         Returns tuple of (entries, parsed_files)"""
         versions = self.get_versions_between(from_version, to_version)
         markdown_files = self.get_markdown_files_for_versions(versions)
-        parsed_entries = self.parse_markdown_files(markdown_files)
-        
-        return parsed_entries, markdown_files
+        changelog_entries = self.parse_markdown_files(markdown_files)
+        return changelog_entries, markdown_files

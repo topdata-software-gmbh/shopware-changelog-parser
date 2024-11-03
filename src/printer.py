@@ -1,6 +1,8 @@
 from pathlib import Path
+from typing import List
 
 import typer
+from .models import ChangelogEntry
 
 def print_versions(versions: list):
     """Print available changelog versions."""
@@ -14,7 +16,7 @@ def print_versions(versions: list):
 
 from .markdown_generator import generate_version_comparison
 
-def print_version_comparison(from_version: str, to_version: str, to_entries: list, parsed_files: list, output_file: Path = None, stdout: bool = False):
+def print_version_comparison(from_version: str, to_version: str, to_entries: List[ChangelogEntry], parsed_files: list, output_file: Path = None, stdout: bool = False):
     """Print comparison between two versions."""
     # Always show parsed files to stdout
     typer.echo("\nParsed changelog files:")
