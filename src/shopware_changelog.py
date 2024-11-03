@@ -7,6 +7,41 @@ import re
 
 app = typer.Typer()
 
+def get_available_versions(repo_path: str) -> List[str]:
+    """Get all available changelog versions from the repository."""
+    changelog_dir = Path(repo_path) / "changelog"
+    if not changelog_dir.exists():
+        return []
+    
+    versions = []
+    for dir in changelog_dir.glob("release-*"):
+        version = dir.name.replace("release-", "")
+        versions.append(version)
+    
+    return sorted(versions)
+
+@app.command()
+def list_versions(
+    repo_path: str = typer.Option("./shopware_repo", help="Path to clone/store the repository"),
+):
+    """List all available changelog versions."""
+    # Clone or update repository
+    typer.echo("Fetching repository...")
+    try:
+        repo = clone_or_pull_repo("https://github.com/shopware/shopware.git", repo_path)
+    except git.exc.GitCommandError as e:
+        typer.echo(f"Error accessing repository: {e}")
+        raise typer.Exit(1)
+
+    versions = get_available_versions(repo_path)
+    if not versions:
+        typer.echo("No changelog versions found")
+        raise typer.Exit(1)
+
+    typer.echo("\nAvailable versions:")
+    for version in versions:
+        typer.echo(version)
+
 def clone_or_pull_repo(repo_url: str, target_dir: str) -> git.Repo:
     """Clone the repository if it doesn't exist, or pull if it does."""
     if os.path.exists(target_dir):
