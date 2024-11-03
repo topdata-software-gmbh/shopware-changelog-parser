@@ -7,6 +7,7 @@ dependencies = [
     "rich",
     "typer",
     "gitpython",
+    "InquirerPy",
 ]
 
 
@@ -15,7 +16,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project.scripts]
-sw-changelog = "src.shopware_changelog:app"
+sw-changelog = "src.cli:app"
 
 # ere is no directory that matches the name of your project (shopware_release_parser).
 # You need to specify the files to include in the tool.hatch.build.targets.wheel table.
