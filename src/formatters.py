@@ -2,6 +2,9 @@ from typing import Dict, Any
 from .models import ChangelogEntry
 import yaml
 import json
+from pygments import highlight
+from pygments.formatters import TerminalFormatter
+from pygments.lexers import JsonLexer, YamlLexer
 
 def format_original(entry: ChangelogEntry) -> str:
     """Format entry as original markdown with frontmatter"""
@@ -35,12 +38,14 @@ def format_markdown(entry: ChangelogEntry) -> str:
 def format_yaml(entry: ChangelogEntry) -> str:
      """Format entry as YAML"""
      data = entry.model_dump()
-     return yaml.dump(data, default_flow_style=False)
+     yaml_str = yaml.dump(data, default_flow_style=False)
+     return highlight(yaml_str, YamlLexer(), TerminalFormatter())
 
 def format_json(entry: ChangelogEntry) -> str:
      """Format entry as JSON"""
      data = entry.model_dump()
-     return json.dumps(data, indent=2, default=str)
+     json_str = json.dumps(data, indent=4, default=str)
+     return highlight(json_str, JsonLexer(), TerminalFormatter())
      
 FORMATTERS = {
     'original': format_original,

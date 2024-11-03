@@ -1,6 +1,9 @@
 from pathlib import Path
 from typing import List
 import json
+from pygments import highlight
+from pygments.formatters import TerminalFormatter
+from pygments.lexers import JsonLexer
 
 import typer
 from .models import ChangelogEntry
@@ -32,7 +35,8 @@ def print_version_comparison(from_version: str, to_version: str, to_entries: Lis
             "entries": [entry.model_dump() for entry in to_entries],
             "parsed_files": parsed_files
         }
-        final_content = json.dumps(comparison, indent=2, default=str)
+        json_str = json.dumps(comparison, indent=4, default=str)
+        final_content = highlight(json_str, JsonLexer(), TerminalFormatter())
     else:
         final_content = generate_version_comparison(from_version, to_version, to_entries)
 
