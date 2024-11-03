@@ -3,6 +3,7 @@ import git
 from pathlib import Path
 from InquirerPy import inquirer
 from .changelog import ChangelogManager
+from .printer import print_versions, print_version_comparison, print_changelog_file
 
 app = typer.Typer(help="Shopware Changelog Parser", add_help_option=True, context_settings={"help_option_names": ["-h", "--help"]})
 
@@ -22,13 +23,7 @@ def list_versions(
         raise typer.Exit(1)
 
     versions = manager.get_available_versions()
-    if not versions:
-        typer.echo("No changelog versions found")
-        raise typer.Exit(1)
-
-    typer.echo("\nAvailable versions:")
-    for version in versions:
-        typer.echo(version)
+    print_versions(versions)
 
 @app.command()
 def compare_versions(
@@ -58,22 +53,7 @@ def compare_versions(
         typer.echo(f"Error reading changelog entries: {e}")
         raise typer.Exit(1)
 
-    # Display results
-    typer.echo(f"\nChanges from version {from_version} to {to_version}:\n")
-
-    typer.echo(f"Changes in {from_version}:")
-    typer.echo("=" * 40)
-    for entry in from_entries:
-        typer.echo(f"[{entry['date']}] {entry['description']}")
-        if entry['content']:
-            typer.echo(f"  {entry['content']}\n")
-
-    typer.echo(f"\nChanges in {to_version}:")
-    typer.echo("=" * 40)
-    for entry in to_entries:
-        typer.echo(f"[{entry['date']}] {entry['description']}")
-        if entry['content']:
-            typer.echo(f"  {entry['content']}\n")
+    print_version_comparison(from_version, to_version, from_entries, to_entries)
 
 @app.command()
 def parse_file(
@@ -103,21 +83,8 @@ def parse_file(
         default=changelog_files[0] if changelog_files else None,
     ).execute()
 
-    # Parse and display the selected file
-    # try:
     parsed_content = manager.parse_changelog_file(selected_file)
-    typer.echo("\nParsed content:")
-    typer.echo("=" * 40)
-    typer.echo(f"Date: {parsed_content['date']}")
-    typer.echo(f"Title: {parsed_content['title']}")
-    typer.echo(f"Issue: {parsed_content['issue']}")
-    if parsed_content['author']:
-        typer.echo(f"Author: {parsed_content['author']}")
-    if parsed_content['author_email']:
-        typer.echo(f"Author Email: {parsed_content['author_email']}")
-    if parsed_content['author_github']:
-        typer.echo(f"Author Github: {parsed_content['author_github']}")
-    typer.echo(f"Content:\n{parsed_content['content']}")
+    print_changelog_file(parsed_content)
     # except Exception as e:
     #     typer.echo(f"Error parsing changelog file: {e}")
     #     raise typer.Exit(1)
