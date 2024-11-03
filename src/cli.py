@@ -30,6 +30,8 @@ def compare_versions(
     from_version: str = typer.Option(..., "--from", help="Starting version (e.g., 6-3-1-1)"),
     to_version: str = typer.Option(..., "--to", help="Ending version (e.g., 6-3-2-0)"),
     repo_path: str = typer.Option("./shopware_repo", help="Path to clone/store the repository"),
+    output_file: Path = typer.Option("./output/changelog.md", help="Output file path for changelog"),
+    stdout: bool = typer.Option(False, "--stdout", help="Print changelog to stdout instead of file"),
 ):
     """Compare changelog entries between two Shopware versions."""
     manager = ChangelogManager(repo_path)
@@ -42,18 +44,12 @@ def compare_versions(
         typer.echo(f"Error accessing repository: {e}")
         raise typer.Exit(1)
 
-    # Get changelog entries for both versions
-    try:
-        typer.echo(f"Looking for changelog entries for version {from_version}")
-        from_entries = manager.get_changelog_entries(from_version)
-        
-        typer.echo(f"Looking for changelog entries for version {to_version}")
-        to_entries = manager.get_changelog_entries(to_version)
-    except Exception as e:
-        typer.echo(f"Error reading changelog entries: {e}")
-        raise typer.Exit(1)
+    # Get changelog entries between versions
+    typer.echo(f"Looking for changelog entries between versions {from_version} and {to_version}")
+    entries, parsed_files = manager.get_entries_between_versions(from_version, to_version)
 
-    print_version_comparison(from_version, to_version, from_entries, to_entries)
+
+    print_version_comparison(from_version, to_version, entries, parsed_files, output_file, stdout)
 
 @app.command()
 def parse_file(

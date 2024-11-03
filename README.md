@@ -12,7 +12,7 @@ pip install .
 
 ## Usage
 
-The tool provides two main commands:
+The tool provides three main commands:
 
 ### List Available Versions
 
@@ -28,6 +28,14 @@ To compare changelog entries between two Shopware versions:
 
 ```bash
 sw-changelog compare-versions --from 6-3-1-1 --to 6-3-2-0 [--repo-path ./shopware_repo]
+```
+
+### Parse Single Changelog File
+
+To interactively select and parse a single changelog file:
+
+```bash
+sw-changelog parse-file [--repo-path ./shopware_repo]
 ```
 
 ### Options
@@ -46,8 +54,9 @@ sw-changelog compare-versions --from 6-3-1-1 --to 6-3-2-0 [--repo-path ./shopwar
 - rich
 - typer
 - gitpython
+- InquirerPy
 
-## Example
+## Examples
 
 ```bash
 # List all available versions
@@ -55,6 +64,9 @@ sw-changelog list-versions
 
 # Compare changes between two versions
 sw-changelog compare-versions --from 6-3-1-1 --to 6-3-2-0
+
+# Parse a single changelog file (interactive)
+sw-changelog parse-file
 ```
 
 The tool will automatically clone the Shopware repository if it doesn't exist, or update it if it does.

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import typer
 
 def print_versions(versions: list):
@@ -10,23 +12,24 @@ def print_versions(versions: list):
     for version in versions:
         typer.echo(version)
 
-def print_version_comparison(from_version: str, to_version: str, from_entries: list, to_entries: list):
+from .markdown_generator import generate_version_comparison
+
+def print_version_comparison(from_version: str, to_version: str, to_entries: list, parsed_files: list, output_file: Path = None, stdout: bool = False):
     """Print comparison between two versions."""
-    typer.echo(f"\nChanges from version {from_version} to {to_version}:\n")
+    # Always show parsed files to stdout
+    typer.echo("\nParsed changelog files:")
+    for file in parsed_files:
+        typer.secho(f"  {file}", fg="bright_blue")
 
-    typer.echo(f"Changes in {from_version}:")
-    typer.echo("=" * 40)
-    for entry in from_entries:
-        typer.echo(f"[{entry['date']}] {entry['description']}")
-        if entry['content']:
-            typer.echo(f"  {entry['content']}\n")
+    # Generate the changelog content
+    final_content = generate_version_comparison(from_version, to_version, to_entries)
 
-    typer.echo(f"\nChanges in {to_version}:")
-    typer.echo("=" * 40)
-    for entry in to_entries:
-        typer.echo(f"[{entry['date']}] {entry['description']}")
-        if entry['content']:
-            typer.echo(f"  {entry['content']}\n")
+    # Output based on mode
+    if stdout:
+        typer.echo(final_content)
+    else:
+        output_file.write_text(final_content)
+        typer.echo(f"\nChangelog written to: {output_file}")
 
 def print_changelog_file(parsed_content: dict):
     """Print parsed changelog file content."""

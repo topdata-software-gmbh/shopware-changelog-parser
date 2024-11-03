@@ -82,17 +82,58 @@ class ChangelogManager:
 
         entries = []
         for file in changelog_dir.glob("*.md"):
-            # Parse date and description from filename
-            match = re.match(r"(\d{4}-\d{2}-\d{2})-(.+)\.md", file.name)
-            if match:
-                date, description = match.groups()
-                with open(file, 'r', encoding='utf-8') as f:
-                    content = f.read().strip()
-                entries.append({
-                    'date': date,
-                    'description': description.replace('-', ' '),
-                    'content': content,
-                    'file': file.name
-                })
+            rel_path = file.relative_to(self.repo_path)
+            entry = self.parse_changelog_file(str(rel_path))
+            entries.append(entry)
 
-        return sorted(entries, key=lambda x: x['date'])
+        return sorted(entries, key=lambda x: x['date'] if x['date'] else '')
+
+    def _version_to_tuple(self, version: str) -> tuple:
+        """Convert version string to comparable tuple."""
+        parts = version.replace('-', '.').split('.')
+        return tuple(map(int, parts))
+
+    def get_versions_between(self, from_version: str, to_version: str) -> List[str]:
+        """Get all version folders after from_version up to and including to_version."""
+        all_versions = self.get_available_versions()
+        from_parts = self._version_to_tuple(from_version)
+        to_parts = self._version_to_tuple(to_version)
+        
+        included_versions = []
+        for version in all_versions:
+            version_parts = self._version_to_tuple(version)
+            if from_parts < version_parts <= to_parts:  # Changed <= to < for from_version comparison
+                included_versions.append(version)
+        
+        return included_versions
+
+    def get_markdown_files_for_versions(self, versions: List[str]) -> List[str]:
+        """Get all markdown files for given versions."""
+        markdown_files = []
+        for version in versions:
+            version_dir = Path(self.repo_path) / "changelog" / f"release-{version}"
+            if version_dir.exists():
+                files = [str(f.relative_to(self.repo_path)) for f in version_dir.glob("*.md")]
+                markdown_files.extend(files)
+        return markdown_files
+
+    def parse_markdown_files(self, files: List[str]) -> List[dict]:
+        """Parse markdown files and return structured data."""
+        parsed_entries = []
+        for file_path in files:
+            try:
+                entry = self.parse_changelog_file(file_path)
+                parsed_entries.append(entry)
+            except FileNotFoundError:
+                continue
+        
+        return sorted(parsed_entries, key=lambda x: x['date'] if x['date'] else '')
+
+    def get_entries_between_versions(self, from_version: str, to_version: str) -> tuple[List[dict], List[str]]:
+        """Get all changelog entries between two versions, inclusive.
+        Returns tuple of (entries, parsed_files)"""
+        versions = self.get_versions_between(from_version, to_version)
+        markdown_files = self.get_markdown_files_for_versions(versions)
+        parsed_entries = self.parse_markdown_files(markdown_files)
+        
+        return parsed_entries, markdown_files
