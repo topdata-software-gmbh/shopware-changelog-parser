@@ -4,6 +4,9 @@ import json
 from pygments import highlight
 from pygments.formatters import TerminalFormatter
 from pygments.lexers import JsonLexer
+from .formatters import CHANGELOG_ENTRY_FORMATTERS, VERSION_COMPARISON_FORMATTERS
+
+
 
 import typer
 from .models import ChangelogEntry
@@ -28,17 +31,12 @@ def print_version_comparison(from_version: str, to_version: str, to_entries: Lis
         typer.secho(f"  {file}", fg="bright_blue")
 
     # Generate the changelog content
-    if format == "json":
-        comparison = {
-            "from_version": from_version,
-            "to_version": to_version,
-            "entries": [entry.model_dump() for entry in to_entries],
-            "parsed_files": parsed_files
-        }
-        json_str = json.dumps(comparison, indent=4, default=str)
-        final_content = highlight(json_str, JsonLexer(), TerminalFormatter())
-    else:
-        final_content = generate_version_comparison(from_version, to_version, to_entries)
+    if format not in VERSION_COMPARISON_FORMATTERS:
+        typer.echo(f"Unknown format: {format}. Using 'markdown'.")
+        format = 'markdown'
+    
+    formatter = VERSION_COMPARISON_FORMATTERS[format]
+    final_content = formatter(from_version, to_version, to_entries, parsed_files)
 
     # Output based on mode
     if stdout:
@@ -47,13 +45,11 @@ def print_version_comparison(from_version: str, to_version: str, to_entries: Lis
         output_file.write_text(final_content)
         typer.echo(f"\nChangelog written to: {output_file}")
 
-from .formatters import FORMATTERS
-
 def print_changelog_file(entry: ChangelogEntry, format: str = "original"):
     """Print a single changelog entry in the specified format."""
-    if format not in FORMATTERS:
+    if format not in CHANGELOG_ENTRY_FORMATTERS:
         typer.echo(f"Unknown format: {format}. Using 'original'.")
         format = "original"
     
-    formatter = FORMATTERS[format]
+    formatter = CHANGELOG_ENTRY_FORMATTERS[format]
     typer.echo(formatter(entry))

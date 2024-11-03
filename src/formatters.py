@@ -39,6 +39,7 @@ def format_yaml(entry: ChangelogEntry) -> str:
      """Format entry as YAML"""
      data = entry.model_dump()
      yaml_str = yaml.dump(data, default_flow_style=False)
+     print("yaml_str: ", yaml_str)
      return highlight(yaml_str, YamlLexer(), TerminalFormatter())
 
 def format_json(entry: ChangelogEntry) -> str:
@@ -46,10 +47,45 @@ def format_json(entry: ChangelogEntry) -> str:
      data = entry.model_dump()
      json_str = json.dumps(data, indent=4, default=str)
      return highlight(json_str, JsonLexer(), TerminalFormatter())
-     
-FORMATTERS = {
+
+def format_version_comparison_json(from_version: str, to_version: str, entries: list, parsed_files: list) -> str:
+    """Format version comparison as JSON"""
+    comparison = {
+        "from_version": from_version,
+        "to_version": to_version,
+        "entries": [entry.model_dump() for entry in entries],
+        "parsed_files": parsed_files
+    }
+    json_str = json.dumps(comparison, indent=4, default=str)
+    return highlight(json_str, JsonLexer(), TerminalFormatter())
+
+def format_version_comparison_markdown(from_version: str, to_version: str, entries: list, parsed_files: list) -> str:
+    """Format version comparison as Markdown"""
+    from .markdown_generator import generate_version_comparison
+    return generate_version_comparison(from_version, to_version, entries)
+
+def format_version_comparison_yaml(from_version: str, to_version: str, entries: list, parsed_files: list) -> str:
+    """Format version comparison as YAML"""
+    comparison = {
+        "from_version": from_version,
+        "to_version": to_version,
+        "entries": [entry.model_dump() for entry in entries],
+        "parsed_files": parsed_files
+    }
+    yaml_str = yaml.dump(comparison, default_flow_style=False)
+    return highlight(yaml_str, YamlLexer(), TerminalFormatter())
+
+# Formatters for single changelog entries
+CHANGELOG_ENTRY_FORMATTERS = {
     'original': format_original,
     'markdown': format_markdown,
     'yaml': format_yaml,
     'json': format_json
+}
+
+# Formatters for version comparisons
+VERSION_COMPARISON_FORMATTERS = {
+    'json': format_version_comparison_json,
+    'markdown': format_version_comparison_markdown,
+    'yaml': format_version_comparison_yaml
 }
