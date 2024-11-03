@@ -1,5 +1,5 @@
 [project]
-name = "shopware-release-parser"
+name = "shopware-changelog-parser"
 version = "0.1.0"
 description = "Parser for Shopware GitHub releases to extract changelog information"
 requires-python = ">=3.8"
