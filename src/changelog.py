@@ -2,7 +2,7 @@ import git
 import os
 from pathlib import Path
 from typing import List, Tuple
-from .models import ChangelogEntry
+from .models import ChangelogEntry, VersionComparison
 import re
 from . import frontmatter
 
@@ -47,8 +47,8 @@ class ChangelogManager:
         
         return sorted(files, reverse=True)
 
-    def parse_changelog_file(self, file_path: str) -> dict:
-        """Parse a single changelog file and return structured content."""
+    def parse_changelog_file(self, file_path: str) -> ChangelogEntry:
+        """Parse a single changelog file and return a ChangelogEntry model."""
         full_path = Path(self.repo_path) / file_path
         if not full_path.exists():
             raise FileNotFoundError(f"Changelog file not found: {file_path}")
@@ -60,19 +60,21 @@ class ChangelogManager:
         filename = Path(file_path).name
         date_part = filename[:10] if len(filename) >= 10 else None
 
-        return {
-            'date': metadata.get('date', date_part),  # Use frontmatter date if available, fallback to filename
-            'title': metadata.get('title', metadata.get('issue', '')),  # Use frontmatter title/issue if available
-            'content': content,
-            'file': file_path,
-            'issue': metadata.get('issue', ''),
-            'author': metadata.get('author', ''),
-            'author_email': metadata.get('author_email', ''),
-            'author_github': metadata.get('author_github', ''),
-            'metadata': metadata  # Include all frontmatter metadata
-        }
+        # Extract version from file path (release-6-4-20-0/file.md -> 6.4.20.0)
+        version = file_path.split('/')[1].replace('release-', '').replace('-', '.')
+        
+        return ChangelogEntry(
+            date=metadata.get('date', date_part),
+            title=metadata.get('title', metadata.get('issue', '')),
+            version=version,
+            content=content,
+            issue=metadata.get('issue'),
+            author=metadata.get('author'),
+            author_email=metadata.get('author_email'),
+            author_github=metadata.get('author_github')
+        )
 
-    def get_changelog_entries(self, version: str) -> List[dict]:
+    def get_changelog_entries(self, version: str) -> List[ChangelogEntry]:
         """Get changelog entries for a specific version."""
         # Replace dots with dashes in version number
         version = version.replace('.', '-')
@@ -84,10 +86,10 @@ class ChangelogManager:
         entries = []
         for file in changelog_dir.glob("*.md"):
             rel_path = file.relative_to(self.repo_path)
-            entry = self.parse_changelog_file(str(rel_path))
-            entries.append(entry)
+            changelog_entry = self.parse_changelog_file(str(rel_path))
+            entries.append(changelog_entry)
 
-        return sorted(entries, key=lambda x: x['date'] if x['date'] else '')
+        return sorted(entries, key=lambda x: x.date if x.date else '')
 
     def _version_to_tuple(self, version: str) -> tuple:
         """Convert version string to comparable tuple."""
@@ -123,25 +125,21 @@ class ChangelogManager:
         parsed_entries = []
         for file_path in files:
             try:
-                entry_dict = self.parse_changelog_file(file_path)
-                # Extract version from file path (release-6-4-20-0/file.md -> 6.4.20.0)
-                version = entry_dict['file'].split('/')[1].replace('release-', '').replace('-', '.')
-                
-                changelog_entry = ChangelogEntry(
-                    date=entry_dict['date'],
-                    title=entry_dict['title'],
-                    version=version,
-                    content=entry_dict['content'],
-                    issue=entry_dict['issue'],
-                    author=entry_dict['author'],
-                    author_email=entry_dict['author_email'],
-                    author_github=entry_dict['author_github']
-                )
+                changelog_entry = self.parse_changelog_file(file_path)
                 parsed_entries.append(changelog_entry)
             except FileNotFoundError:
                 continue
         
         return sorted(parsed_entries, key=lambda x: x.date if x.date else '')
+
+    def get_version_comparison(self, from_version: str, to_version: str) -> VersionComparison:
+        """Get a VersionComparison object for the specified versions."""
+        entries, _ = self.get_entries_between_versions(from_version, to_version)
+        return VersionComparison(
+            from_version=from_version,
+            to_version=to_version,
+            entries=entries
+        )
 
     def get_entries_between_versions(self, from_version: str, to_version: str) -> Tuple[List[ChangelogEntry], List[str]]:
         """Get all changelog entries between two versions, inclusive.
