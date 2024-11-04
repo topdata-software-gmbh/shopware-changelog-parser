@@ -30,6 +30,12 @@ To compare changelog entries between two Shopware versions:
 sw-changelog compare-versions --from 6-3-1-1 --to 6-3-2-0 [--repo-path ./shopware_repo]
 ```
 
+If you omit the `--to` parameter, the tool will automatically use the newest available version for comparison:
+
+```bash
+sw-changelog compare-versions --from 6-3-1-1
+```
+
 ### Parse Single Changelog File
 
 To interactively select and parse a single changelog file:
