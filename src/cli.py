@@ -99,10 +99,10 @@ def parse_file(
 @app.command()
 def notify(
     repo_path: str = typer.Option("./shopware_repo", help="Path to clone/store the repository"),
-    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be sent without actually sending to Slack"),
+    no_notification: bool = typer.Option(False, "--no-notification", help="Check for updates without sending notifications"),
 ):
     """Check for new versions and send Slack notifications"""
-    if not dry_run:
+    if not no_notification:
         slack_token = os.getenv('SLACK_TOKEN')
         slack_channel = os.getenv('SLACK_CHANNEL')
         
@@ -126,9 +126,9 @@ def notify(
         slack_channel = "dry-run-channel"
     
     notifier = ReleaseNotifier(slack_token, slack_channel)
-    notifier.check_and_notify(dry_run=dry_run)
-    if dry_run:
-        typer.echo("Dry run complete - no notifications were actually sent")
+    notifier.check_and_notify(no_notification=no_notification)
+    if no_notification:
+        typer.echo("Check complete - no notifications were sent")
     else:
         typer.echo("Notification check complete")
 

@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 class ChangelogEntry(BaseModel):
     """Represents a single changelog entry."""
-    date: date
+    date: str # when using date it failed with string 2020-25-10
     title: str
     version: str
     file: str
