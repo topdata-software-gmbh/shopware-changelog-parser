@@ -28,7 +28,7 @@ def list_versions(
 @app.command()
 def compare_versions(
     from_version: str = typer.Option(..., "--from", help="Starting version (e.g., 6-3-1-1)"),
-    to_version: str = typer.Option(..., "--to", help="Ending version (e.g., 6-3-2-0)"),
+    to_version: str = typer.Option(None, "--to", help="Ending version (e.g., 6-3-2-0). Defaults to newest version."),
     repo_path: str = typer.Option("./shopware_repo", help="Path to clone/store the repository"),
     output_file: Path = typer.Option("./output/changelog.md", help="Output file path for changelog"),
     stdout: bool = typer.Option(False, "--stdout", help="Print changelog to stdout instead of file"),
@@ -44,6 +44,12 @@ def compare_versions(
     except git.exc.GitCommandError as e:
         typer.echo(f"Error accessing repository: {e}")
         raise typer.Exit(1)
+
+    # If no to_version specified, use the newest available version
+    if to_version is None:
+        versions = manager.get_available_versions()
+        to_version = versions[-1]  # Get the last (newest) version
+        typer.echo(f"No target version specified. Using newest version: {to_version}")
 
     # Get changelog entries between versions
     typer.echo(f"Looking for changelog entries between versions {from_version} and {to_version}")
