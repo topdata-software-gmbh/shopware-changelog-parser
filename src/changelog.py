@@ -1,10 +1,13 @@
 import git
 import os
+import logging
 from pathlib import Path
 from typing import List, Tuple
 from .models import ChangelogEntry, VersionComparison
 import re
 from . import frontmatter
+
+logger = logging.getLogger(__name__)
 
 class ChangelogManager:
     def __init__(self, repo_path: str = "./shopware_repo"):
@@ -94,8 +97,14 @@ class ChangelogManager:
 
     def _version_to_tuple(self, version: str) -> tuple:
         """Convert version string to comparable tuple."""
-        parts = version.replace('-', '.').split('.')
-        return tuple(map(int, parts))
+        try:
+            # Clean the version string and split into parts
+            parts = version.replace('-', '.').split('.')
+            # Convert each part to int, defaulting to 0 for invalid parts
+            return tuple(int(part) if part.isdigit() else 0 for part in parts)
+        except (ValueError, AttributeError):
+            logger.warning(f"Invalid version format: {version}")
+            return (0, 0, 0, 0)  # Return safe default for invalid versions
 
     def get_versions_between(self, from_version: str, to_version: str) -> List[str]:
         """Get all version folders after from_version up to and including to_version."""

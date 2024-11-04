@@ -27,15 +27,25 @@ class ReleaseNotifier:
         try:
             with open('releases.json', 'r') as f:
                 data = json.load(f)
-                return data.get('last_checked_version')
+                if isinstance(data, dict):
+                    return data.get('last_checked_version')
+                elif isinstance(data, list):
+                    # Handle case where file contains a list
+                    return data[0] if data else None
+                else:
+                    logger.warning(f"Unexpected data format in releases.json: {type(data)}")
+                    return None
         except FileNotFoundError:
+            return None
+        except json.JSONDecodeError:
+            logger.error("Invalid JSON in releases.json")
             return None
             
     def save_last_checked_version(self, version: str):
         with open('releases.json', 'w') as f:
             json.dump({'last_checked_version': version}, f)
             
-    def check_and_notify(self):
+    def check_and_notify(self, dry_run: bool = False):
         try:
             # Get latest available version
             versions = self.changelog_manager.get_available_versions()
@@ -51,7 +61,7 @@ class ReleaseNotifier:
             if not last_checked or latest_version != last_checked:
                 # New version found
                 logger.info(f"New version detected: {latest_version}")
-                entries = self.changelog_manager.get_entries_between_versions(
+                entries, parsed_files = self.changelog_manager.get_entries_between_versions(
                     last_checked, latest_version
                 )
                 
@@ -63,15 +73,29 @@ class ReleaseNotifier:
                 )
                 
                 try:
-                    # Post to Slack
-                    self.slack_client.chat_postMessage(
-                        channel=self.channel,
-                        text=f"New Shopware release: {latest_version}\n{message}"
-                    )
-                    logger.info("Successfully posted to Slack")
-                    
-                    # Only update last checked version if Slack notification succeeded
-                    self.save_last_checked_version(latest_version)
+                    # Print notification to console
+                    print(f"New Shopware release: {latest_version}\n{message}")
+                    logger.info("Notification printed to console")
+                
+                    # Try to post to Slack if credentials are set and not in dry-run mode
+                    if self.channel:
+                        notification_text = f"New Shopware release: {latest_version}\n{message}"
+                        if dry_run:
+                            logger.info("DRY RUN: Would send to Slack:")
+                            logger.info(f"Channel: {self.channel}")
+                            logger.info("Message:")
+                            logger.info(notification_text)
+                        else:
+                            try:
+                                self.slack_client.chat_postMessage(
+                                    channel=self.channel,
+                                    text=notification_text
+                                )
+                                logger.info("Successfully posted to Slack")
+                                # Only update last checked version if Slack notification succeeded
+                                self.save_last_checked_version(latest_version)
+                            except SlackApiError as e:
+                                logger.error(f"Failed to post to Slack: {str(e)}")
                     
                 except SlackApiError as e:
                     logger.error(f"Failed to post to Slack: {str(e)}")
@@ -89,13 +113,14 @@ def main():
         logger.error("SLACK_TOKEN and SLACK_CHANNEL environment variables must be set")
         return 1
         
-    try:
-        notifier = ReleaseNotifier(slack_token, slack_channel)
-        notifier.check_and_notify()
-        return 0
-    except Exception as e:
-        logger.error(f"Failed to run notifier: {str(e)}")
-        return 1
+    if slack_token and slack_channel:
+        try:
+            notifier = ReleaseNotifier(slack_token, slack_channel)
+            notifier.check_and_notify()
+        except Exception as e:
+            logger.error(f"Failed to run notifier: {str(e)}")
+    logger.info("No Slack credentials set, skipping notification")
+    return 0
 
 if __name__ == "__main__":
     main()

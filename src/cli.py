@@ -93,18 +93,38 @@ def parse_file(
 @app.command()
 def notify(
     repo_path: str = typer.Option("./shopware_repo", help="Path to clone/store the repository"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be sent without actually sending to Slack"),
 ):
-    """Test Slack notification for latest version"""
-    slack_token = os.getenv('SLACK_TOKEN')
-    slack_channel = os.getenv('SLACK_CHANNEL')
-    
-    if not slack_token or not slack_channel:
-        typer.echo("Error: SLACK_TOKEN and SLACK_CHANNEL environment variables must be set")
-        raise typer.Exit(1)
+    """Check for new versions and send Slack notifications"""
+    if not dry_run:
+        slack_token = os.getenv('SLACK_TOKEN')
+        slack_channel = os.getenv('SLACK_CHANNEL')
+        
+        missing_vars = []
+        if not slack_token:
+            missing_vars.append("SLACK_TOKEN")
+        if not slack_channel:
+            missing_vars.append("SLACK_CHANNEL")
+            
+        if missing_vars:
+            typer.echo("Error: The following environment variables are required but not set:")
+            for var in missing_vars:
+                typer.echo(f"  - {var}")
+            typer.echo("\nPlease set them using:")
+            typer.echo("  export SLACK_TOKEN='your-slack-token'")
+            typer.echo("  export SLACK_CHANNEL='your-channel-name'")
+            raise typer.Exit(1)
+    else:
+        # Use dummy values for dry-run
+        slack_token = "dry-run-token"
+        slack_channel = "dry-run-channel"
     
     notifier = ReleaseNotifier(slack_token, slack_channel)
-    notifier.check_and_notify()
-    typer.echo("Notification check complete")
+    notifier.check_and_notify(dry_run=dry_run)
+    if dry_run:
+        typer.echo("Dry run complete - no notifications were actually sent")
+    else:
+        typer.echo("Notification check complete")
 
 if __name__ == "__main__":
     app()
