@@ -125,7 +125,7 @@ def notify(
         slack_token = "dry-run-token"
         slack_channel = "dry-run-channel"
     
-    notifier = ReleaseNotifier(slack_token, slack_channel)
+    notifier = ReleaseNotifier(slack_token, slack_channel, repo_path=repo_path)
     notifier.check_and_notify(no_notification=no_notification)
     if no_notification:
         typer.echo("Check complete - no notifications were sent")

@@ -18,8 +18,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class ReleaseChecker:
-    def __init__(self, state_file: str = '.release-state'):
-        self.changelog_manager = ChangelogManager()
+    def __init__(self, state_file: str = '.release-state', repo_path: str = "./shopware_repo"):
+        self.changelog_manager = ChangelogManager(repo_path)
         self.state_file = state_file
         
     def get_last_checked_version(self) -> Optional[str]:
@@ -40,6 +40,8 @@ class ReleaseChecker:
     def check_for_updates(self) -> Tuple[Optional[str], Optional[str], Optional[List[ChangelogEntry]], Optional[str]]:
         """Returns (latest_version, last_checked_version, changelog_entries, formatted_message)"""
         try:
+            # Ensure repo is up to date
+            self.changelog_manager.clone_or_pull_repo()
             versions = self.changelog_manager.get_available_versions()
             if not versions:
                 logger.warning("No versions found")
@@ -104,8 +106,8 @@ class NotificationService:
             return False
 
 class ReleaseNotifier:
-    def __init__(self, slack_token: str, channel: str):
-        self.checker = ReleaseChecker()
+    def __init__(self, slack_token: str, channel: str, repo_path: str = "./shopware_repo"):
+        self.checker = ReleaseChecker(repo_path=repo_path)
         self.notifier = NotificationService(slack_token, channel)
         
     def check_and_notify(self, no_notification: bool = False):
