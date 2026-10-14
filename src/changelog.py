@@ -24,8 +24,8 @@ class ChangelogManager:
         for dir in changelog_dir.glob("release-*"):
             version = dir.name.replace("release-", "")
             versions.append(version)
-        
-        return sorted(versions)
+
+        return sorted(versions, key=self._version_to_tuple)
 
     def clone_or_pull_repo(self) -> git.Repo:
         """Clone the repository if it doesn't exist, or pull if it does."""
